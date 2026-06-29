@@ -2,7 +2,9 @@
 # exit on error
 set -o errexit
 
+# Install python dependencies
 pip install -r requirements.txt
 
-# Download the background browser engine binaries required by Playwright
+# Install Chromium browser binaries AND their required Linux system libraries
 playwright install chromium
+playwright install-deps chromium
