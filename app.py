@@ -66,13 +66,13 @@ def crop_screenshot_to_cart_panel(raw_image_path: str):
 
 
 def run_playwright_simulation(items_list: list):
-    """PHASE 1: CLOUD SIMULATION LOOP (HEADLESS PRODUCTION SETUP)"""
+    """PHASE 1: CLOUD SIMULATION LOOP (ULTRA-LOW MEMORY CONSUMPTION PROFILE)"""
     print("\n [Playwright Engine] Running Headless Sourcing Automation Matrix...")
     screenshot_path = os.path.join(STATIC_DIR, "latest_checkout_cart.png")
     
     with sync_playwright() as p:
         try:
-            # Headless mode active with secure sandboxing argument configurations for Linux container runtimes
+            # MEMORY SAVING ARGS: Strips down chromium memory overhead to fit inside 512MB RAM
             browser = p.chromium.launch(
                 headless=True, 
                 args=[
@@ -80,16 +80,21 @@ def run_playwright_simulation(items_list: list):
                     "--disable-setuid-sandbox", 
                     "--disable-dev-shm-usage",
                     "--disable-gpu",
-                    "--single-process"
+                    "--single-process",
+                    "--no-zygote",
+                    "--js-flags='--max-old-space-size=128'" # Restricts JavaScript heap limits
                 ]
             )
-            # Emulate standard maximized screen bounds inside context config
-            context = browser.new_context(viewport={"width": 1280, "height": 800})
+            # Emulate smaller screen context to drastically decrease image rendering memory limits
+            context = browser.new_context(viewport={"width": 1024, "height": 768})
             page = context.new_page()
+            
+            # Block heavy images, stylesheets, and fonts from loading to save RAM and speed up execution
+            page.route("**/*", lambda route: route.abort() if route.request.resource_type in ["image", "font", "media"] else route.continue_())
             
             print(" Navigating to https://blinkit.com")
             page.goto("https://blinkit.com", timeout=60000)
-            time.sleep(5)
+            time.sleep(3)
             
             # Location Setup
             print(" Locating Address Input Container...")
@@ -97,12 +102,12 @@ def run_playwright_simulation(items_list: list):
             if location_input.is_visible(timeout=5000):
                 location_input.click()
                 location_input.type("PSG Tech, Peelamedu, Coimbatore", delay=100)
-                time.sleep(4) 
+                time.sleep(3) 
                 
                 first_suggestion = page.locator("//div[contains(@class, 'LocationSearchList__LocationLabel')]").first
                 if first_suggestion.is_visible(timeout=5000):
                     first_suggestion.click(force=True)
-                    time.sleep(6) 
+                    time.sleep(4) 
             
             # Smart Multi-Product Sourcing Automation
             for item in items_list:
@@ -113,39 +118,37 @@ def run_playwright_simulation(items_list: list):
                 search_placeholder = page.locator("//div[contains(@class, 'SearchBar__PlaceholderContainer')] | //input[@placeholder='Search for atta dal and more']").first
                 if search_placeholder.is_visible(timeout=5000):
                     search_placeholder.click(force=True)
-                    time.sleep(1.5)
+                    time.sleep(1)
                 
                 main_search_bar = page.locator("//input[contains(@placeholder, 'Search')]").first
                 if main_search_bar.is_visible(timeout=5000):
                     main_search_bar.click()
                     page.keyboard.press("Control+A")
                     page.keyboard.press("Backspace")
-                    main_search_bar.type(smart_query, delay=150)
-                    time.sleep(3) 
+                    main_search_bar.type(smart_query, delay=100)
+                    time.sleep(2) 
                     
                     page.keyboard.press("Enter")
-                    time.sleep(5)
+                    time.sleep(3)
                     
                     grid_add_button = page.locator("//div[text()='ADD'] | //div[text()='Add'] | //div[contains(@class, 'AddToCart')]").first
                     if grid_add_button.is_visible(timeout=5000):
                         grid_add_button.scroll_into_view_if_needed()
                         grid_add_button.click(force=True)
-                        print(f" Item '{smart_query}' primary click added to viewport state.")
-                        time.sleep(2.5)
+                        time.sleep(2)
                         
                         for click_idx in range(target_clicks - 1):
                             plus_incrementer = page.locator("//div[contains(@class, 'QuantityBlock')]//div[text()='+'] | //div[text()='+']").first
-                            if plus_incrementer.is_visible(timeout=3000):
+                            if plus_incrementer.is_visible(timeout=2000):
                                 plus_incrementer.click(force=True)
-                                print(f" Dispatched additional increment click (Loop: {click_idx + 2})")
-                                time.sleep(1.5)
+                                time.sleep(1)
             
             # Expand Cart Drawer Summary View
             print(" Opening live cart summary panel tray sheet...")
             my_cart_button = page.locator("//div[contains(., 'My Cart')] | //button[contains(., 'My Cart')] | //div[contains(@class, 'CartButton')]").first
             if my_cart_button.is_visible(timeout=5000):
                 my_cart_button.click(force=True)
-                time.sleep(4) 
+                time.sleep(3) 
                 
             print(" Snapping visual layout page grid viewport capture matrix...")
             page.screenshot(path=screenshot_path)
