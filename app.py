@@ -67,124 +67,97 @@ def crop_screenshot_to_cart_panel(raw_image_path: str):
 
 
 def run_playwright_simulation(items_list: list):
-    """PHASE 1: INSTANT RUN AUTOMATION LOOP (SMART METRIC & PACK TRACKER)"""
-    print("\n [Playwright Engine] Initializing True Full-Screen Automation...")
+    """PHASE 1: INSTANT RUN AUTOMATION LOOP (ROBUST CLOUD PRODUCTION ENVIRONMENT)"""
+    print("\n[Playwright Engine] Running Headless Cloud Sourcing Automation...")
     screenshot_path = os.path.join(STATIC_DIR, "latest_checkout_cart.png")
     
     with sync_playwright() as p:
         try:
-            browser = p.chromium.launch(headless=False, args=["--start-maximized", "--no-sandbox", "--disable-infobars"])
-            context = browser.new_context(no_viewport=True)
+            # ROBUST CLOUD FLAGS: Ensures Chromium runs without a desktop layer on Render Linux instances
+            browser = p.chromium.launch(
+                headless=True, 
+                args=[
+                    "--no-sandbox", 
+                    "--disable-setuid-sandbox", 
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu",
+                    "--single-process"
+                ]
+            )
+            
+            # Set a standard desktop window size for the background canvas
+            context = browser.new_context(viewport={"width": 1280, "height": 800})
             page = context.new_page()
             
-            print(" Navigating to https://blinkit.com")
+            print("Navigating to https://blinkit.com")
             page.goto("https://blinkit.com", timeout=60000)
-            time.sleep(4)
+            time.sleep(5)
             
             # Location Setup
-            print(" Locating Address Input Container...")
-            location_input = page.locator("//input[@placeholder='search delivery location']")
-            if location_input.is_visible():
+            print("Locating Address Input Container...")
+            location_input = page.locator("//input[@placeholder='search delivery location']").first
+            if location_input.is_visible(timeout=5000):
                 location_input.click()
                 location_input.type("PSG Tech, Peelamedu, Coimbatore", delay=100)
                 time.sleep(4) 
                 
                 first_suggestion = page.locator("//div[contains(@class, 'LocationSearchList__LocationLabel')]").first
-                if first_suggestion.is_visible():
+                if first_suggestion.is_visible(timeout=5000):
                     first_suggestion.click(force=True)
+                    print("Manual Location Selection Confirmed Successfully.")
                     time.sleep(6) 
             
             # Smart Multi-Product Sourcing Automation
             for item in items_list:
-                # FIXED: Maps to 'search_query' key from the dictionary payload correctly
                 smart_query = item.get("search_query", "").strip()
                 target_clicks = item.get("click_count", 1)
-                print(f" Searching optimized metric query string: '{smart_query}' | Action Loops: {target_clicks}")
+                print(f"Searching optimized metric query string: '{smart_query}' | Action Loops: {target_clicks}")
                 
-                search_placeholder = page.locator("//div[contains(@class, 'SearchBar__PlaceholderContainer')]").first
-                if search_placeholder.is_visible():
-                    search_placeholder.click()
-                    time.sleep(1)
+                search_placeholder = page.locator("//div[contains(@class, 'SearchBar__PlaceholderContainer')] | //input[@placeholder='Search for atta dal and more']").first
+                if search_placeholder.is_visible(timeout=5000):
+                    search_placeholder.click(force=True)
+                    time.sleep(1.5)
                 
-                main_search_bar = page.locator("//input[@placeholder='Search for atta dal and more']").first
-                if main_search_bar.is_visible():
+                main_search_bar = page.locator("//input[contains(@placeholder, 'Search')]").first
+                if main_search_bar.is_visible(timeout=5000):
                     main_search_bar.click()
                     page.keyboard.press("Control+A")
                     page.keyboard.press("Backspace")
                     main_search_bar.type(smart_query, delay=150)
                     time.sleep(3) 
                     
-                    dropdown_suggestion_row = page.locator("//div[contains(@class, 'SuggestionText')] | //div[contains(@class, 'Search__SuggestionText')]").first
-                    if dropdown_suggestion_row.is_visible():
-                        dropdown_suggestion_row.click(force=True)
-                        time.sleep(5) 
-                    else:
-                        page.keyboard.press("Enter")
-                        time.sleep(5)
+                    page.keyboard.press("Enter")
+                    time.sleep(5)
                     
-                    # 1. Click the 'ADD' button the first time
                     grid_add_button = page.locator("//div[text()='ADD'] | //div[text()='Add'] | //div[contains(@class, 'AddToCart')]").first
-                    if grid_add_button.is_visible():
+                    if grid_add_button.is_visible(timeout=5000):
                         grid_add_button.scroll_into_view_if_needed()
                         grid_add_button.click(force=True)
-                        print(f" Clicked ADD the first time for '{smart_query}'.")
-                        time.sleep(2.5) # Wait for UI to safely transition to dynamic quantity layout blocks
+                        print(f"Item '{smart_query}' primary click added to viewport state.")
+                        time.sleep(2.5) 
                         
-                        # 2. Click the '+' button dynamically for remaining packs using your fallback logic
                         for click_idx in range(target_clicks - 1):
-                            # Scopes selector specifically to product increment wrappers containing '+' or plus classes
                             plus_button = page.locator("//div[contains(@class, 'QuantityBlock')]//div[text()='+'] | //div[text()='+'] | //div[contains(@class, 'plus')]").first
-                            if plus_button.is_visible():
+                            if plus_button.is_visible(timeout=3000):
                                 plus_button.click(force=True)
-                                print(f" Clicked '+' to add product count multiplier: {click_idx + 2}")
+                                print(f"Clicked '+' to add product count multiplier: {click_idx + 2}")
                                 time.sleep(1.5)
             
             # Expand Cart Drawer Summary View
-            print(" Opening live cart summary panel tray sheet...")
+            print("Opening live cart summary panel tray sheet...")
             my_cart_button = page.locator("//div[contains(., 'My Cart')] | //button[contains(., 'My Cart')] | //div[contains(@class, 'CartButton')]").first
-            if my_cart_button.is_visible():
+            if my_cart_button.is_visible(timeout=5000):
                 my_cart_button.click(force=True)
                 time.sleep(4) 
                 
-            print(" Snapping visual layout page grid viewport capture matrix...")
+            print("Snapping visual layout page grid viewport capture matrix...")
             page.screenshot(path=screenshot_path)
             browser.close()
             
             crop_screenshot_to_cart_panel(screenshot_path)
             
         except Exception as e:
-            print(f" [Playwright Live Automation Exception]: {str(e)}")
-
-
-def run_payment_success_simulation():
-    """PHASE 3: SECURE TRANSACTION SUCCESS SIMULATION PAGE GATEWAY"""
-    print("\n¼ [Playwright Engine] Initializing Payment Gateway Simulation...")
-    with sync_playwright() as p:
-        try:
-            browser = p.chromium.launch(headless=False, args=["--start-maximized"])
-            context = browser.new_context(no_viewport=True)
-            page = context.new_page()
-            
-            mock_success_html = """
-            <html>
-            <body style="background:#0c0c0e; display:flex; justify-content:center; align-items:center; height:100vh; font-family:'Segoe UI',sans-serif; color:#fff;">
-                <div style="text-align:center; background:#131316; padding:50px; border-radius:24px; border:1px solid #27272c; box-shadow:0 20px 40px rgba(0,0,0,0.5);">
-                    <div style="font-size:70px; margin-bottom:20px; color:#00e676;">✔️</div>
-                    <h1 style="font-size:2.5rem; color:#00e676; margin-bottom:10px;">Payment Successful!</h1>
-                    <p style="color:#a0a0b0; font-size:1.1rem; margin-bottom:30px;">CozyCub Autonomous Agent Routing Completed.</p>
-                    <div style="display:inline-block; background:#1a1a22; padding:12px 24px; border-radius:8px; border:1px solid #27272c; font-size:0.95rem; color:#00e676;">
-                        Order Dispatched to PSG Tech, Peelamedu 📍
-                    </div>
-                </div>
-            </body>
-            </html>
-            """
-            page.set_content(mock_success_html)
-            time.sleep(8)
-            browser.close()
-        except Exception as e:
-            print(f" [Payment Automation Error]: {str(e)}")
-
+            print(f"[Playwright Live Automation Exception]: {str(e)}")
 
 @app.route('/static/<path:filename>')
 def serve_static_assets(filename):
