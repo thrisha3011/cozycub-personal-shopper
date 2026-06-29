@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>JioMart - Cart Summary & Secure Checkout</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; }
+        body { background: #f4f4f7; color: #1f1f24; padding: 30px; display: flex; justify-content: center; }
+        .checkout-container { width: 100%; max-width: 500px; background: #ffffff; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid #e2e2e9; }
+        .brand-header { background: #002244; color: #ffffff; padding: 20px; text-align: center; font-weight: bold; font-size: 1.3rem; letter-spacing: 0.5px; }
+        .brand-header span { color: #e91e63; }
+        .section-pane { padding: 24px; border-bottom: 1px solid #f0f0f5; }
+        .pane-title { font-size: 1rem; font-weight: 700; color: #002244; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .cart-item-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 1.05rem; border-bottom: 1px dashed #f0f0f5; padding-bottom: 8px; }
+        .item-details { font-weight: 500; color: #33333a; }
+        .item-price { font-weight: 600; color: #1f1f24; }
+        .bill-details-table { width: 100%; margin-top: 8px; }
+        .bill-details-table td { padding: 6px 0; font-size: 0.98rem; color: #55555f; }
+        .total-row td { font-weight: 700; font-size: 1.2rem; color: #002244; padding-top: 14px !important; border-top: 2px dashed #e2e2e9; }
+        .stripe-pay-btn { width: 100%; background: #00a36c; color: #ffffff; border: none; padding: 16px; font-size: 1.1rem; font-weight: 700; border-radius: 8px; cursor: pointer; transition: background 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,163,108,0.2); }
+        .stripe-pay-btn:hover { background: #00875a; }
+        .success-overlay { display: none; text-align: center; padding: 30px 20px; background: #ebfaf2; border: 2px solid #00a36c; margin: 20px; border-radius: 12px; }
+        .success-icon { width: 50px; height: 50px; background: #00a36c; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: bold; margin: 0 auto 14px auto; }
+        .success-title { color: #006644; font-size: 1.25rem; font-weight: 700; margin-bottom: 6px; }
+    </style>
+</head>
+<body>
+    <div class="checkout-container">
+        <div class="brand-header">Jio<span>Mart</span> Fulfillment Sandbox</div>
+        
+        <div class="section-pane">
+            <div class="pane-title">Review Basket Items</div>
+            <div id="itemsContainer">
+                </div>
+        </div>
+
+        <div class="section-pane" id="billingPane">
+            <div class="pane-title">Payment Summary</div>
+            <table class="bill-details-table">
+                <tr>
+                    <td>Basket Subtotal</td>
+                    <td align="right" id="subtotalDisplay">₹0.00</td>
+                </tr>
+                <tr>
+                    <td>Fulfillment & Delivery Fee</td>
+                    <td align="right">₹40.00</td>
+                </tr>
+                <tr class="total-row">
+                    <td>Grand Total Billable</td>
+                    <td align="right" id="grandTotalDisplay">₹0.00</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section-pane" id="actionPane" style="background: #fafafc;">
+            <button class="stripe-pay-btn" id="mockStripeBtn" onclick="executeSimulatedPayment()">
+                🔒 Pay & Place Order
+            </button>
+        </div>
+
+        <div class="success-overlay" id="paymentSuccessCard">
+            <div class="success-icon">✓</div>
+            <div class="success-title">Payment Successful!</div>
+            <p style="color: #447755; font-size: 0.92rem;">Stripe Transaction Confirmed. Items dispatched to fulfillment.</p>
+        </div>
+    </div>
+
+    <script>
+        // Extract raw JSON items string safely from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const encodedItems = urlParams.get('items');
+        const items = JSON.parse(decodeURIComponent(encodedItems));
+
+        let subtotal = 0;
+        const container = document.getElementById('itemsContainer');
+
+        // Loop and render every parsed item row
+        items.forEach(item => {
+            subtotal += item.price;
+            const row = document.createElement('div');
+            row.className = 'cart-item-row';
+            row.innerHTML = `<span class="item-details">${item.title}</span><span class="item-price">₹${item.price.toFixed(2)}</span>`;
+            container.appendChild(row);
+        });
+
+        const total = subtotal + 40.00;
+        document.getElementById('subtotalDisplay').innerText = `₹${subtotal.toFixed(2)}`;
+        document.getElementById('grandTotalDisplay').innerText = `₹${total.toFixed(2)}`;
+        document.getElementById('mockStripeBtn').innerText = `🔒 Pay & Place Order (₹${total.toFixed(2)})`;
+
+        function executeSimulatedPayment() {
+            const btn = document.getElementById('mockStripeBtn');
+            btn.innerText = "⏳ Verifying Security Tokens...";
+            btn.disabled = true;
+
+            setTimeout(() => {
+                document.getElementById('billingPane').style.display = 'none';
+                document.getElementById('actionPane').style.display = 'none';
+                document.getElementById('paymentSuccessCard').style.display = 'block';
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
