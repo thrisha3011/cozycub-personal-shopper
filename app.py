@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, render_template_string, send_from_directory
-from ddgs import DDGS  
+
 from playwright.sync_api import sync_playwright
 from langchain_groq import ChatGroq
 from pydantic import BaseModel, Field
